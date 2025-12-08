@@ -24,15 +24,15 @@
     .thankyou {font-size:2rem;line-height:1.4;}
   </style>
 
-  <!-- 1. Tag-scanned ping – fires the instant the page loads -->
+  <!-- 1. Tag-scanned ping – fires instantly on page load -->
   <script>
     fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-tag-scanned', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event: 'tag_scanned',
         cabin: new URLSearchParams(location.search).get('c') || 'Guest',
-        room: new URLSearchParams(location.search).get('room') || '',
+        room: new URLSearchParams(location.search).get('room') || null,
         url: location.href,
         timestamp: new Date().toISOString()
       }),
@@ -112,13 +112,13 @@ function app() {
     submit(type) {
       fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-feedback', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cabin: this.cabin,
-          room: this.room,
-          prettyRoom: this.prettyRoom,
-          type,
-          issue: this.selected || 'N/A',
+          cabin: this.cabin || 'Guest',
+          room: this.room || null,
+          prettyRoom: this.prettyRoom || 'Unknown Room',
+          type: type,
+          issue: this.selected || 'None selected',
           comment: this.comment || '',
           phone: this.phone || null,
           timestamp: new Date().toISOString(),
