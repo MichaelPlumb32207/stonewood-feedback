@@ -23,7 +23,24 @@
     .happy-submit {background:#3b82f6;}
     .thankyou {font-size:2rem;line-height:1.4;}
   </style>
+
+  <!-- 1. Tag-scanned ping – fires the instant the page loads -->
+  <script>
+    fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-tag-scanned', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        event: 'tag_scanned',
+        cabin: new URLSearchParams(location.search).get('c') || 'Guest',
+        room: new URLSearchParams(location.search).get('room') || '',
+        url: location.href,
+        timestamp: new Date().toISOString()
+      }),
+      keepalive: true
+    }).catch(() => {});
+  </script>
 </head>
+
 <body>
 <div class="card" x-data="app()">
   <h1>Stonewood Cabins</h1>
@@ -34,7 +51,7 @@
     <button class="btn-happy" @click="happy=true">Everything is perfect 😊</button>
   </div>
 
-  <!-- Issue selection -->
+  <!-- Issue selection – auto-shown when a room tag is scanned -->
   <div x-show="room && !selected">
     <p style="font-size:1.5rem;margin:2rem 0 1.5rem 0;font-weight:600">What needs a look?</p>
     <template x-for="opt in options">
@@ -93,13 +110,19 @@ function app() {
     happy: false, selected: '', comment: '', phone: '', sent: false,
 
     submit(type) {
-      fetch('https://n8n.yourdomain.com/webhook/stonewood-feedback', {  // ← replace with real URL
+      fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-feedback', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          cabin: this.cabin, room: this.room, prettyRoom: this.prettyRoom,
-          type, issue: this.selected || 'N/A', comment: this.comment || '',
-          phone: this.phone || null, timestamp: new Date().toISOString(), url: location.href
+          cabin: this.cabin,
+          room: this.room,
+          prettyRoom: this.prettyRoom,
+          type,
+          issue: this.selected || 'N/A',
+          comment: this.comment || '',
+          phone: this.phone || null,
+          timestamp: new Date().toISOString(),
+          url: location.href
         })
       });
       this.sent = true;
