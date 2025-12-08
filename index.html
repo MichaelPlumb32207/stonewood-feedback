@@ -26,7 +26,7 @@
 
   <!-- 1. Tag-scanned ping – fires instantly on page load -->
   <script>
-    fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-tag-scanned', {
+    fetch('https://meplumb.app.n8n.cloud/webhook-test/stonewood-tag-scanned', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -110,7 +110,7 @@ function app() {
     happy: false, selected: '', comment: '', phone: '', sent: false,
 
     submit(type) {
-      fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-feedback', {
+      fetch('https://meplumb.app.n8n.cloud/webhook-test/stonewood-feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
