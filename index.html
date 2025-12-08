@@ -10,7 +10,6 @@
     body {font-family:system-ui;background:#f9fafb;padding:2rem;text-align:center;margin:0;}
     .card {background:white;max-width:500px;margin:2rem auto;padding:2rem;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
     .btn-happy {background:#10b981;color:white;padding:1.2rem 2.5rem;border-radius:12px;border:none;font-size:1.4rem;}
-    .btn-issue {background:#fee2e2;color:#dc2626;padding:1rem 2rem;border-radius:12px;border:none;margin-top:2rem;font-size:1.2rem;}
     .grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin:2rem 0;}
   </style>
 </head>
@@ -19,12 +18,12 @@
   <h1 style="color:#1e40af;margin-bottom:0.5rem">Stonewood Cabins</h1>
   <h2 x-show="cabin">Cabin <span x-text="cabin"></span> – <span x-text="prettyRoom"></span></h2>
 
-  <!-- Happy path (only shows if no room was scanned) -->
+  <!-- Happy path (only if no room scanned) -->
   <div x-show="!room && !happy">
     <button class="btn-happy" @click="happy=true">Everything is perfect 😊</button>
   </div>
 
-  <!-- Issue path – auto-shown when a room tag is scanned -->
+  <!-- Issue selection – auto-shown when a room tag is scanned -->
   <div x-show="room && !selected">
     <p style="font-size:1.2rem;margin:2rem 0;font-weight:600">What needs a look?</p>
     <div class="grid">
@@ -57,7 +56,6 @@
     </button>
   </div>
 
-  <!-- Thank you screen -->
   <div x-show="sent" style="margin:4rem;font-size:1.8rem;line-height:1.4">
     ✅ Thank you!<br><br>We’ve got it and will take care of it right away.
   </div>
@@ -75,11 +73,13 @@ function app() {
     'bathroom': 'Bathroom'
   };
   const roomOptions = {
-    'master-bedroom': ['TV','Bed','Lights','Temperature','Noise','Hot Tub'],
-    'kitchen': ['Appliances','Coffee Maker','Ice Maker','Dishwasher','Cookware'],
-    'living-hot-tub': ['Hot Tub','Fireplace','WiFi','TV','Seating'],
-    'deck-hot-tub': ['Hot Tub','Seating','Lighting'],
-    'default': ['Cleanliness','Noise','Temperature','Hot Tub','TV','Other']
+    'master-bedroom': ['TV', 'Light', 'Bed', 'Window', 'Door', 'Floor', 'Other'],
+    'guest-bedroom':  ['TV', 'Light', 'Bed', 'Window', 'Door', 'Floor', 'Other'],
+    'kitchen':        ['Sink', 'Stove/Oven', 'Fridge', 'Coffee Maker', 'Microwave', 'Lights', 'Window', 'Floor', 'Door'],
+    'living-hot-tub': ['Hot Tub', 'Fireplace', 'WiFi', 'TV', 'Seating'],
+    'deck-hot-tub':   ['Hot Tub', 'Seating', 'Lighting'],
+    'bathroom':       ['Toilet', 'Shower', 'Sink', 'Mirror', 'Lights'],
+    'default':        ['Cleanliness', 'Noise', 'Temperature', 'Hot Tub', 'TV', 'Other']
   };
 
   return {
@@ -94,7 +94,7 @@ function app() {
     sent: false,
 
     submit(type) {
-      fetch('https://n8n.yourdomain.com/webhook/stonewood-feedback', {  // ← replace this with your real n8n webhook
+      fetch('https://n8n.yourdomain.com/webhook/stonewood-feedback', {  // ← replace with your real n8n URL
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
