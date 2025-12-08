@@ -7,15 +7,26 @@
   <link rel="icon" href="data:,">
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <style>
-    body {font-family:system-ui;background:#f9fafb;padding:2rem;text-align:center;margin:0;}
+    body {font-family:system-ui;background:#f9fafb;color:#000;margin:0;padding:1rem;}
     .card {background:white;max-width:500px;margin:2rem auto;padding:2rem;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
-    .btn-happy {background:#10b981;color:white;padding:1.2rem 2.5rem;border-radius:12px;border:none;font-size:1.4rem;}
-    .grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin:2rem 0;}
+    h1 {font-size:2rem;color:#1e40af;margin:0 0 0.5rem 0;}
+    h2 {font-size:1.5rem;margin:0.5rem 0 1.5rem 0;}
+    .btn-happy {background:#10b981;color:white;padding:1.2rem;border-radius:12px;border:none;font-size:1.8rem;font-weight:600;width:100%;margin-bottom:2rem;}
+    .option-btn {
+      background:#e5e7eb;color:#000;padding:1.4rem 1rem;border-radius:12px;
+      font-size:1.4rem;font-weight:600;text-align:center;width:100%;
+      margin-bottom:1rem;min-height:64px;display:flex;align-items:center;justify-content:center;
+    }
+    .other-btn {background:#d1d5db;color:#000;}
+    textarea, input[type=tel] {width:100%;padding:1rem;font-size:1.2rem;border-radius:8px;border:1px solid #ccc;margin:1rem 0;}
+    .submit-btn {background:#dc2626;color:white;padding:1.2rem;border:none;border-radius:12px;font-size:1.6rem;font-weight:600;width:100%;}
+    .happy-submit {background:#3b82f6;}
+    .thankyou {font-size:2rem;line-height:1.4;}
   </style>
 </head>
 <body>
 <div class="card" x-data="app()">
-  <h1 style="color:#1e40af;margin-bottom:0.5rem">Stonewood Cabins</h1>
+  <h1>Stonewood Cabins</h1>
   <h2 x-show="cabin">Cabin <span x-text="cabin"></span> – <span x-text="prettyRoom"></span></h2>
 
   <!-- Happy path (only if no room scanned) -->
@@ -23,40 +34,36 @@
     <button class="btn-happy" @click="happy=true">Everything is perfect 😊</button>
   </div>
 
-  <!-- Issue selection – auto-shown when a room tag is scanned -->
+  <!-- Issue selection -->
   <div x-show="room && !selected">
-    <p style="font-size:1.2rem;margin:2rem 0;font-weight:600">What needs a look?</p>
-    <div class="grid">
-      <template x-for="opt in options">
-        <button @click="selected=opt" style="padding:1rem;background:#e5e7eb;border-radius:8px;font-weight:600">
-          <span x-text="opt"></span>
-        </button>
-      </template>
-    </div>
-    <button @click="selected='Other / General Comment'" style="margin:1rem;padding:1rem;background:#ddd;border-radius:8px">
-      Other / General Comment
-    </button>
+    <p style="font-size:1.5rem;margin:2rem 0 1.5rem 0;font-weight:600">What needs a look?</p>
+    <template x-for="opt in options">
+      <button @click="selected=opt" class="option-btn" style="font-size:1.5rem">
+        <span x-text="opt"></span>
+      </button>
+    </template>
+    <button @click="selected='Other / General Comment'" class="option-btn other-btn">Other / General Comment</button>
   </div>
 
-  <!-- Happy submission -->
+  <!-- Happy note -->
   <div x-show="happy && !sent">
-    <p style="font-size:1.3rem;margin:2rem 0">Awesome! Want to leave a quick note?</p>
-    <textarea x-model="comment" placeholder="Optional – we love hearing what you enjoyed!" style="width:90%;height:120px;padding:1rem"></textarea><br><br>
-    <button @click="submit('happy')" style="background:#3b82f6;color:white;padding:1rem 2rem;border:none;border-radius:8px">Send Thank You →</button>
+    <p style="font-size:1.6rem;margin:2rem 0">Awesome! Want to leave a quick note?</p>
+    <textarea x-model="comment" placeholder="Optional – we love hearing what you enjoyed!" rows="4"></textarea>
+    <button @click="submit('happy')" class="submit-btn happy-submit">Send Thank You →</button>
   </div>
 
   <!-- Issue details -->
   <div x-show="selected && !sent">
-    <p style="font-weight:600;margin:1.5rem 0">Selected: <span x-text="selected"></span></p>
-    <textarea x-model="comment" placeholder="Details (optional)" style="width:90%;height:120px;padding:1rem"></textarea><br><br>
-    <input type="tel" x-model="phone" placeholder="Phone (optional – for updates)" style="padding:0.8rem;width:90%;margin:0.5rem 0"><br>
-    <label style="font-size:0.9rem"><input type="checkbox" required> OK to text me updates</label><br><br>
-    <button @click="submit('issue')" style="background:#dc2626;color:white;padding:1rem 2rem;border:none;border-radius:8px;font-size:1.2rem">
-      Send Report →
-    </button>
+    <p style="font-size:1.6rem;margin:2rem 0 1rem 0;font-weight:600">Selected: <span x-text="selected"></span></p>
+    <textarea x-model="comment" placeholder="Details (optional)" rows="4"></textarea>
+    <input type="tel" x-model="phone" placeholder="Phone (optional – for updates)">
+    <label style="font-size:1rem;display:block;margin:1rem 0">
+      <input type="checkbox" required> OK to text me updates
+    </label>
+    <button @click="submit('issue')" class="submit-btn">Send Report →</button>
   </div>
 
-  <div x-show="sent" style="margin:4rem;font-size:1.8rem;line-height:1.4">
+  <div x-show="sent" class="thankyou">
     ✅ Thank you!<br><br>We’ve got it and will take care of it right away.
   </div>
 </div>
@@ -65,12 +72,8 @@
 function app() {
   const params = new URLSearchParams(location.search);
   const roomMap = {
-    'master-bedroom': 'Master Bedroom',
-    'guest-bedroom': 'Guest Bedroom',
-    'kitchen': 'Kitchen',
-    'living-hot-tub': 'Living Room / Hot Tub',
-    'deck-hot-tub': 'Deck / Hot Tub',
-    'bathroom': 'Bathroom'
+    'master-bedroom': 'Master Bedroom','guest-bedroom': 'Guest Bedroom','kitchen': 'Kitchen',
+    'living-hot-tub': 'Living Room / Hot Tub','deck-hot-tub': 'Deck / Hot Tub','bathroom': 'Bathroom'
   };
   const roomOptions = {
     'master-bedroom': ['TV', 'Light', 'Bed', 'Window', 'Door', 'Floor', 'Other'],
@@ -87,26 +90,16 @@ function app() {
     room: params.get('room') || '',
     prettyRoom: roomMap[params.get('room') || ''] || 'Your Stay',
     options: roomOptions[params.get('room') || ''] || roomOptions.default,
-    happy: false,
-    selected: '',
-    comment: '',
-    phone: '',
-    sent: false,
+    happy: false, selected: '', comment: '', phone: '', sent: false,
 
     submit(type) {
-      fetch('https://n8n.yourdomain.com/webhook/stonewood-feedback', {  // ← replace with your real n8n URL
+      fetch('https://n8n.yourdomain.com/webhook/stonewood-feedback', {  // ← replace with real URL
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          cabin: this.cabin,
-          room: this.room,
-          prettyRoom: this.prettyRoom,
-          type,
-          issue: this.selected || 'N/A',
-          comment: this.comment || '',
-          phone: this.phone || null,
-          timestamp: new Date().toISOString(),
-          url: location.href
+          cabin: this.cabin, room: this.room, prettyRoom: this.prettyRoom,
+          type, issue: this.selected || 'N/A', comment: this.comment || '',
+          phone: this.phone || null, timestamp: new Date().toISOString(), url: location.href
         })
       });
       this.sent = true;
