@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Stonewood Cabins – Quick Feedback</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <style>body{font-family:system-ui;background:#f8f9fa;padding:2rem;text-align:center;}</style>
+</head>
+<body>
+<div x-data="feedbackApp()">
+  <h1>Stonewood Cabins</h1>
+  <template x-if="cabin && room">
+    <h2>Cabin <span x-text="cabin"></span> – <span x-text="roomName"></span></h2>
+  </template>
+
+  <!-- Happy path -->
+  <div style="margin:2rem 0">
+    <button @click="type='happy'" style="font-size:1.5rem;padding:1rem 2rem;margin:1rem;border-radius:12px;background:#10b981;color:white;border:none">
+      Everything is perfect! 😊
+    </button>
+  </div>
+
+  <!-- Issue path -->
+  <div x-show="type==='issue'">
+    <p style="font-size:1.2rem">What needs attention?</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:400px;margin:2rem auto">
+      <template x-for="opt in issues[room || 'generic']">
+        <button @click="selected=opt" style="padding:1rem;background:#e5e7eb;border-radius:8px">
+          <span x-text="opt"></span>
+        </button>
+      </template>
+    </div>
+    <button @click="selected='Other'" style="margin-top:1rem;padding:1rem;background:#ddd;border-radius:8px">Other / Comment</button>
+  </div>
+
+  <!-- Form -->
+  <div x-show="selected" style="margin-top:2rem">
+    <textarea x-model="comment" placeholder="Optional details…" style="width:90%;max-width:500px;height:100px;padding:1rem"></textarea><br><br>
+    <input type="tel" x-model="phone" placeholder="Your phone (optional – we’ll text you updates)" style="padding:0.5rem;width:90%;max-width:500px"><br><br>
+    <label><input type="checkbox" required> OK to text me updates</label><br><br>
+    <button @click="submit()" style="background:#3b82f6;color:white;padding:1rem 2rem;border:none;border-radius:8px;font-size:1.2rem">Send →</button>
+  </div>
+
+  <div x-show="sent" style="margin-top:3rem;font-size:1.5rem">
+    ✅ Thank you! We’ve got it and will take care of it right away.
+  </div>
+</div>
+
+<script>
+function feedbackApp() {
+  const params = new URLSearchParams(location.search);
+  return {
+    cabin: params.get('c'),
+    room: params.get('room'),
+    type: '',
+    selected: '',
+    comment: '',
+    phone: '',
+    sent: false,
+    roomName() { return this.room ? this.room.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ') : '' },
+    issues: {
+      'master-bedroom': ['TV','Bed','Lights','Temperature','Noise','Hot Tub'],
+      'kitchen': ['Appliances','Dishwasher','Coffee Maker','Ice Maker','Cookware'],
+      'living-hot-tub': ['Hot Tub','Fireplace','WiFi','TV','Seating'],
+      generic: ['Cleanliness','Smell','Noise','Maintenance','Other']
+    },
+    async submit() {
+      const payload = {
+        cabin: this.cabin,
+        room: this.room,
+        roomName: this.roomName(),
+        type: this.type,
+        issue: this.selected,
+        comment: this.comment,
+        phone: this.phone,
+        timestamp: new Date().toISOString(),
+        url: location.href
+      };
+      await fetch('https://n8n.yourdomain.com/webhook/feedback-stonewood', {
+        method: 'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      this.sent = true;
+    }
+  };
+}
+</script>
+</body>
+</html>
