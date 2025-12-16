@@ -6,8 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://unpkg.com/marked/marked.min.js"></script> <!-- For rendering Markdown -->
   <style>
-    body {font-family:system-ui;background:#f9fafb;color:#000;margin:0;padding:1rem;}
+    body {font-family:system-ui;background:#f9fafb;color:#000;margin:0;padding:1rem;position:relative;min-height:100vh;}
     .card {background:white;max-width:500px;margin:2rem auto;padding:2rem;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
     h1 {font-size:2rem;color:#1e40af;margin:0 0 0.5rem 0;}
     h2 {font-size:1.5rem;margin:0.5rem 0 1.5rem 0;}
@@ -22,9 +23,71 @@
     .submit-btn {background:#dc2626;color:white;padding:1.2rem;border:none;border-radius:12px;font-size:1.6rem;font-weight:600;width:100%;}
     .happy-submit {background:#3b82f6;}
     .thankyou {font-size:2rem;line-height:1.4;}
+
+    /* Recorder Button */
+    #rec-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: #dc2626;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    #rec-btn.stop {
+      border-radius: 16px;
+      width: 100px;
+      background: #6b7280;
+    }
+    #rec-btn.recording::before {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 2px;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+
+    /* Summary overlay */
+    #summary-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 200;
+    }
+    .summary-card {
+      background: white;
+      max-width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .summary-card h3 {margin-top: 1.5rem;}
   </style>
 
-  <!-- 1. Tag-scanned ping – fires instantly on page load -->
+  <!-- Existing tag-scanned ping -->
   <script>
     fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-tag-scanned', {
       method: 'POST',
@@ -46,12 +109,11 @@
   <h1>Stonewood Cabins</h1>
   <h2 x-show="cabin">Cabin <span x-text="cabin"></span> – <span x-text="prettyRoom"></span></h2>
 
-  <!-- Happy path (only if no room scanned) -->
+  <!-- Existing feedback flow unchanged -->
   <div x-show="!room && !happy">
     <button class="btn-happy" @click="happy=true">Everything is perfect 😊</button>
   </div>
 
-  <!-- Issue selection – auto-shown when a room tag is scanned -->
   <div x-show="room && !selected">
     <p style="font-size:1.5rem;margin:2rem 0 1.5rem 0;font-weight:600">What needs a look?</p>
     <template x-for="opt in options">
@@ -62,14 +124,12 @@
     <button @click="selected='Other / General Comment'" class="option-btn other-btn">Other / General Comment</button>
   </div>
 
-  <!-- Happy note -->
   <div x-show="happy && !sent">
     <p style="font-size:1.6rem;margin:2rem 0">Awesome! Want to leave a quick note?</p>
     <textarea x-model="comment" placeholder="Optional – we love hearing what you enjoyed!" rows="4"></textarea>
     <button @click="submit('happy')" class="submit-btn happy-submit">Send Thank You →</button>
   </div>
 
-  <!-- Issue details -->
   <div x-show="selected && !sent">
     <p style="font-size:1.6rem;margin:2rem 0 1rem 0;font-weight:600">Selected: <span x-text="selected"></span></p>
     <textarea x-model="comment" placeholder="Details (optional)" rows="4"></textarea>
@@ -85,8 +145,27 @@
   </div>
 </div>
 
+<!-- NEW: Recorder Button -->
+<button id="rec-btn" x-data="recorder()" @click="toggleRecording()">
+  <template x-if="!recording">
+    <span>Rec<br>Conv</span>
+  </template>
+  <template x-if="recording">
+    <span>Stop</span>
+  </template>
+</button>
+
+<!-- NEW: Summary Overlay -->
+<div id="summary-overlay" x-show="summary" x-transition.opacity @click="summary=null" x-data>
+  <div class="summary-card" @click.stop>
+    <button style="float:right;font-size:1.5rem;background:none;border:none;" @click="summary=null">✕</button>
+    <div x-html="renderedSummary"></div>
+  </div>
+</div>
+
 <script>
 function app() {
+  // Existing feedback logic unchanged
   const params = new URLSearchParams(location.search);
   const roomMap = {
     'master-bedroom': 'Master Bedroom','guest-bedroom': 'Guest Bedroom','kitchen': 'Kitchen',
@@ -126,6 +205,69 @@ function app() {
         })
       });
       this.sent = true;
+    }
+  };
+}
+
+// NEW: Recorder logic
+function recorder() {
+  let mediaRecorder = null;
+  let chunks = [];
+
+  return {
+    recording: false,
+    processing: false,
+    summary: null,
+    renderedSummary: '',
+
+    async toggleRecording() {
+      if (!this.recording) {
+        // Start recording
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          chunks = [];
+
+          mediaRecorder.ondataavailable = e => chunks.push(e.data);
+          mediaRecorder.onstop = () => this.uploadAudio();
+
+          mediaRecorder.start();
+          this.recording = true;
+        } catch (err) {
+          alert('Microphone access denied or unavailable.');
+        }
+      } else {
+        // Stop recording
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        this.recording = false;
+        this.processing = true;
+      }
+    },
+
+    async uploadAudio() {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      const file = new File([blob], 'conversation.webm', { type: 'audio/webm' });
+
+      const form = new FormData();
+      form.append('audio', file);
+
+      try {
+        const resp = await fetch('https://meplumb.app.n8n.cloud/webhook/summarize', {
+          method: 'POST',
+          body: form
+        });
+
+        if (!resp.ok) throw new Error('Server error');
+
+        const markdown = await resp.text();
+        this.renderedSummary = marked.parse(markdown);
+        this.summary = true;
+      } catch (err) {
+        alert('Error processing recording: ' + err.message);
+      } finally {
+        this.processing = false;
+      }
     }
   };
 }
