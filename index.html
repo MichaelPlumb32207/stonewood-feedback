@@ -253,7 +253,7 @@ function recorder() {
       form.append('audio', file);
 
       try {
-        const resp = await fetch('https://meplumb.app.n8n.cloud/webhook-test/summarize', {
+        const resp = await fetch('https://meplumb.app.n8n.cloud/webhook/summarize', {
           method: 'POST',
           body: form
         });
