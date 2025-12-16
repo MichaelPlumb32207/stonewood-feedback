@@ -89,7 +89,7 @@
 
   <!-- Existing tag-scanned ping -->
   <script>
-    fetch('https://meplumb.app.n8n.cloud/webhook-test/stonewood-tag-scanned', {
+    fetch('https://meplumb.app.n8n.cloud/webhook/stonewood-tag-scanned', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -253,7 +253,7 @@ function recorder() {
       form.append('audio', file);
 
       try {
-        const resp = await fetch('https://meplumb.app.n8n.cloud/webhook/summarize', {
+        const resp = await fetch('https://meplumb.app.n8n.cloud/webhook-test/summarize', {
           method: 'POST',
           body: form
         });
